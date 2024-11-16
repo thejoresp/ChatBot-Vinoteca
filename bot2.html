@@ -1,0 +1,15 @@
+from fastapi.responses import HTMLResponse
+
+@app.get("/chatbot")
+async def get_chatbot_page():
+return HTMLResponse("""
+<html>
+<body>
+<form action="/chatbot" method="post">
+  <label for="message">Tu mensaje:</label>
+  <input type="text" id="message" name="message">
+  <button type="submit">Enviar</button>
+</form>
+</body>
+</html>
+""")

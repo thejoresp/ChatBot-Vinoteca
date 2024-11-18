@@ -1,12 +1,28 @@
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import numpy as np
 import pandas as pd
 
 app = FastAPI()
+
+# Configurar CORS
+origins = [
+    "http://localhost",
+    "http://localhost:8000",
+    # Agrega aquí otros orígenes permitidos
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Inicializar el modelo de embeddings
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -27,6 +43,9 @@ class Query(BaseModel):
     query: str
     top_k: int = 5
 
+class Message(BaseModel):
+    content: str
+
 @app.post("/index")
 def index_document(doc: Document):
     embedding = model.encode([doc.content])[0]
@@ -41,7 +60,7 @@ def index_document(doc: Document):
 @app.post("/index_csv")
 def index_csv(file_path: str):
     # Leer el archivo CSV desde la ruta especificada
-    df = pd.read_csv('/home/jl/Descargas/tipos_vinos.csv')
+    df = pd.read_csv(file_path)
     for idx, row in df.iterrows():
         doc = Document(id=idx, content=row['content'])
         index_document(doc)
@@ -62,6 +81,12 @@ def retrieve_documents(query: Query):
     response = es.search(index=index_name, body={"query": script_query, "size": query.top_k})
     results = [hit['_source'] for hit in response['hits']['hits']]
     return {"results": results}
+
+@app.post("/chat")
+async def chat(message: Message):
+    # Aquí iría la lógica para interactuar con el modelo de lenguaje
+    respuesta = 'Esta es una respuesta simulada.'  # Simulación de respuesta
+    return {"response": respuesta}
 
 @app.get("/")
 def read_root():

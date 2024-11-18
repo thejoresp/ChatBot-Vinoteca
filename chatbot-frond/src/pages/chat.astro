@@ -1,0 +1,36 @@
+---
+import Chatbot from '../components/Chatbot.astro';
+---
+
+<div class="page-container">
+<div class="content-wrapper">
+    <h1 class="title">Vinoteca</h1>
+    <Chatbot />
+</div>
+</div>
+
+<style>
+  /* Centra todo el contenedor en la página */
+.page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #1c1c1c;
+}
+
+  /* Envuelve el título y el chatbot */
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Espacio entre el título y el chatbot */
+}
+
+  /* Estilo del título */
+.title {
+    font-size: 2rem;
+    color: #ffffff;
+    margin: 0;
+}
+</style>

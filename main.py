@@ -1,68 +1,69 @@
-from elasticsearch import Elasticsearch
-from sentence_transformers import SentenceTransformer
-from fastapi import FastAPI, HTTPException
+import ollama
+from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
-import numpy as np
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 
 app = FastAPI()
 
-# Inicializar el modelo de embeddings
-model = SentenceTransformer('all-MiniLM-L6-v2')
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permitir todas las orígenes, puedes restringir esto según sea necesario
+    allow_credentials=True,
+    allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permitir todos los encabezados
+)
 
-# Conectar a Elasticsearch
-es = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
+# Historial de mensajes para la conversación
+messages = [
+    {'role': 'system', 'content': 'Eres un asistente útil especializado en vinos y vinotecas, siempre cuando empieza un chat saludo y representa a la "Vinoteca Enotek", ofreciendo tu servicio.'},  # Configuración inicial
+]
 
-# Crear el índice en Elasticsearch
-index_name = 'documents'
-if not es.indices.exists(index=index_name):
-    es.indices.create(index=index_name)
+# Cargar datos desde el archivo CSV
+df = pd.read_csv('/home/jl/Development/Ciencia Datos/Procesamiento de habla/ChatBot-Vinoteca/tipos_vinos.csv')
 
-class Document(BaseModel):
-    id: int
+class Message(BaseModel):
     content: str
-
-class Query(BaseModel):
-    query: str
-    top_k: int = 5
-
-@app.post("/index")
-def index_document(doc: Document):
-    embedding = model.encode([doc.content])[0]
-    doc_body = {
-        'id': doc.id,
-        'content': doc.content,
-        'embedding': embedding.tolist()
-    }
-    es.index(index=index_name, id=doc.id, body=doc_body)
-    return {"message": "Documento indexado correctamente"}
-
-@app.post("/index_csv")
-def index_csv(file_path: str):
-    # Leer el archivo CSV desde la ruta especificada
-    df = pd.read_csv('/home/jl/Descargas/tipos_vinos.csv')
-    for idx, row in df.iterrows():
-        doc = Document(id=idx, content=row['content'])
-        index_document(doc)
-    return {"message": "Archivo CSV indexado correctamente"}
-
-@app.post("/retrieve")
-def retrieve_documents(query: Query):
-    query_embedding = model.encode([query.query])[0]
-    script_query = {
-        "script_score": {
-            "query": {"match_all": {}},
-            "script": {
-                "source": "cosineSimilarity(params.query_vector, 'embedding') + 1.0",
-                "params": {"query_vector": query_embedding.tolist()}
-            }
-        }
-    }
-    response = es.search(index=index_name, body={"query": script_query, "size": query.top_k})
-    results = [hit['_source'] for hit in response['hits']['hits']]
-    return {"results": results}
 
 @app.get("/")
 def read_root():
-    return {"message": "Bienvenido a la API"}
+    return {"message": "Bienvenido a la API de Ollama para Vinotecas"}
+
+@app.post("/chat")
+async def chat(message: Message):
+    # Agregar la pregunta al historial de mensajes
+    messages.append({'role': 'user', 'content': message.content})
+
+    # Buscar información relevante en el CSV
+    respuesta_csv = buscar_informacion(message.content)
+
+    # Realizar la consulta a Ollama
+    stream = ollama.chat(
+        model='llama3.2:3b',  # Modelo a usar
+        messages=messages,  # Pasar todo el historial de mensajes
+        stream=True,
+    )
+
+    # Recoger la respuesta del modelo
+    respuesta = ''
+    for chunk in stream:
+        respuesta += chunk['message']['content']
+
+    # Combinar la respuesta del modelo con la información del CSV
+    respuesta_final = f"{respuesta}\n\nInformación adicional:\n{respuesta_csv}"
+
+    # Agregar la respuesta del modelo al historial
+    messages.append({'role': 'assistant', 'content': respuesta_final})
+
+    # Devolver la respuesta al cliente
+    return {"response": respuesta_final}
+def buscar_informacion(query):
+    # Implementar lógica para buscar información relevante en el DataFrame
+    # Por ejemplo, buscar por tipo de vino, ubicación, etc.
+    resultados = df[df.apply(lambda row: query.lower() in row.astype(str).str.lower().values, axis=1)]
+    if not resultados.empty:
+        return resultados.to_dict(orient='records')
+    else:
+        return "No se encontró información relevante en la base de datos."

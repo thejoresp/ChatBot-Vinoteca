@@ -1,6 +1,3 @@
-# Node.js dependencies
-node_modules/
-
 # Configuracion vscode
 .vscode/
 
@@ -13,7 +10,7 @@ build/
 .env.production
 
 # Python cache
-__pycache__/
+.__pycache__/
 
 # Astro generated types
 .astro/

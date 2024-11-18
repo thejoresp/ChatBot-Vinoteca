@@ -17,7 +17,7 @@ app.add_middleware(
 
 # Historial de mensajes para la conversación
 messages = [
-    {'role': 'system', 'content': 'Eres un asistente útil.'},  # Configuración inicial
+    {'role': 'system', 'content': 'Eres un asistente útil, resolviendo dudas.'},  # Configuración inicial
 ]
 
 class Message(BaseModel):

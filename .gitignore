@@ -12,9 +12,6 @@ build/
 # Python cache
 __pycache__/
 
-# Astro generated types
-.astro/
-
 # Logs
 npm-debug.log*
 yarn-debug.log*

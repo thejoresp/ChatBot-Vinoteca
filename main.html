@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+</head>
+<body>
+    <input type="text" id="message" placeholder="Escribe tu mensaje">
+    <button id="send">Enviar</button>
+    <div id="chat-history"></div>
+
+    <script>
+        async function sendMessage() {
+            const message = document.getElementById("message").value;
+            if (message.trim() === "") return; // No enviar mensajes vacíos
+
+            // Agregar el mensaje del usuario al historial
+            const chatHistory = document.getElementById("chat-history");
+            const userMessage = document.createElement("div");
+            userMessage.textContent = `Tú: ${message}`;
+            chatHistory.appendChild(userMessage);
+
+            // Enviar el mensaje al servidor
+            const response = await fetch("http://127.0.0.1:8000/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    content: message
+                })
+            });
+
+            const data = await response.json();
+
+            // Agregar la respuesta del servidor al historial
+            const botMessage = document.createElement("div");
+            botMessage.textContent = `Asistente: ${data.response}`;
+            chatHistory.appendChild(botMessage);
+
+            // Limpiar el campo de entrada
+            document.getElementById("message").value = "";
+
+            // Desplazar el historial hacia abajo
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        document.getElementById("message").addEventListener("keypress", async (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Evitar el comportamiento predeterminado de "Enter"
+                await sendMessage();
+            }
+        });
+
+        document.getElementById("send").addEventListener("click", async () => {
+            await sendMessage();
+        });
+    </script>
+</body>
+</html>

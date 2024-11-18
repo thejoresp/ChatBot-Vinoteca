@@ -32,7 +32,7 @@ async def chat(websocket: WebSocket):
 
             # Realizar la consulta a Ollama
             stream = ollama.chat(
-                model='llama3.2:latest',  # Modelo a usar
+                model='llama3.2:3b',  # Modelo a usar
                 messages=messages,  # Pasar todo el historial de mensajes
                 stream=True,
             )
@@ -49,3 +49,4 @@ async def chat(websocket: WebSocket):
             await websocket.send_text(respuesta)
     except WebSocketDisconnect:
         print("Cliente desconectado")
+

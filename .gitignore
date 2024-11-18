@@ -1,6 +1,9 @@
 # Node.js dependencies
 node_modules/
 
+# Configuracion vscode
+.vscode/
+
 # Build outputs
 dist/
 build/

@@ -11,7 +11,7 @@ build/
 
 # Python cache
 __pycache__/
-venv2/
+venv/
 
 # Logs
 npm-debug.log*

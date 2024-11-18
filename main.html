@@ -18,7 +18,8 @@
 
     <script>
         async function sendMessage() {
-            const message = document.getElementById("message").value;
+            const messageInput = document.getElementById("message");
+            const message = messageInput.value;
             if (message.trim() === "") return; // No enviar mensajes vacíos
 
             // Agregar el mensaje del usuario al historial
@@ -27,6 +28,10 @@
             userMessage.className = "user-message";
             userMessage.textContent = `Tú: ${message}`;
             messages.appendChild(userMessage);
+
+            // Limpiar el campo de entrada y deshabilitarlo
+            messageInput.value = "";
+            messageInput.disabled = true;
 
             // Enviar el mensaje al servidor
             const response = await fetch("http://127.0.0.1:8000/chat", {
@@ -47,8 +52,9 @@
             botMessage.textContent = `Asistente: ${data.response}`;
             messages.appendChild(botMessage);
 
-            // Limpiar el campo de entrada
-            document.getElementById("message").value = "";
+            // Habilitar el campo de entrada nuevamente
+            messageInput.disabled = false;
+            messageInput.focus();
 
             // Desplazar el historial hacia abajo
             messages.scrollTop = messages.scrollHeight;

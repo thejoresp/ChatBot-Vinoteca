@@ -1,3 +1,0 @@
-
-some_embedding_library
-some_database_library

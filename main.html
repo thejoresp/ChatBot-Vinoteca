@@ -6,9 +6,13 @@
     <title>Chatbot</title>
 </head>
 <body>
-    <input type="text" id="message" placeholder="Escribe tu mensaje">
-    <button id="send">Enviar</button>
-    <div id="chat-history"></div>
+    <div class="page-container">
+        <div class="content-wrapper">
+            <h1 class="title">Vinoteca</h1>
+            <input type="text" id="message">
+            <div id="chat-history"></div>
+        </div>
+    </div>
 
     <script>
         async function sendMessage() {
@@ -18,6 +22,7 @@
             // Agregar el mensaje del usuario al historial
             const chatHistory = document.getElementById("chat-history");
             const userMessage = document.createElement("div");
+            userMessage.className = "user-message";
             userMessage.textContent = `Tú: ${message}`;
             chatHistory.appendChild(userMessage);
 
@@ -36,6 +41,7 @@
 
             // Agregar la respuesta del servidor al historial
             const botMessage = document.createElement("div");
+            botMessage.className = "bot-message";
             botMessage.textContent = `Asistente: ${data.response}`;
             chatHistory.appendChild(botMessage);
 
@@ -52,10 +58,70 @@
                 await sendMessage();
             }
         });
-
-        document.getElementById("send").addEventListener("click", async () => {
-            await sendMessage();
-        });
     </script>
+
+    <style>
+        /* Centra todo el contenedor en la página */
+        .page-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1c1c1c;
+        }
+
+        /* Envuelve el título y el chatbot */
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px; /* Espacio entre el título y el chatbot */
+        }
+
+        /* Estilo del título */
+        .title {
+            font-size: 2rem;
+            color: #ffffff;
+            margin: 0;
+        }
+
+        /* Estilo del historial de chat */
+        #chat-history {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            overflow-y: auto;
+            background-color: #e0e0e0; /* Fondo gris */
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Espacio entre los mensajes */
+        }
+
+        /* Estilo de los mensajes del usuario */
+        .user-message {
+            background-color: #ffffff;
+            color: #000000;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            align-self: flex-end;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        /* Estilo de los mensajes del bot */
+        .bot-message {
+            background-color: #ffffff;
+            color: #000000;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            align-self: flex-start;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+    </style>
 </body>
 </html>

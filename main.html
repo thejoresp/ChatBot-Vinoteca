@@ -9,8 +9,10 @@
     <div class="page-container">
         <div class="content-wrapper">
             <h1 class="title">Vinoteca</h1>
-            <input type="text" id="message">
-            <div id="chat-history"></div>
+            <div id="chat-history">
+                <div id="messages"></div>
+                <input type="text" id="message" placeholder="Escribe tu mensaje">
+            </div>
         </div>
     </div>
 
@@ -20,11 +22,11 @@
             if (message.trim() === "") return; // No enviar mensajes vacíos
 
             // Agregar el mensaje del usuario al historial
-            const chatHistory = document.getElementById("chat-history");
+            const messages = document.getElementById("messages");
             const userMessage = document.createElement("div");
             userMessage.className = "user-message";
             userMessage.textContent = `Tú: ${message}`;
-            chatHistory.appendChild(userMessage);
+            messages.appendChild(userMessage);
 
             // Enviar el mensaje al servidor
             const response = await fetch("http://127.0.0.1:8000/chat", {
@@ -43,13 +45,13 @@
             const botMessage = document.createElement("div");
             botMessage.className = "bot-message";
             botMessage.textContent = `Asistente: ${data.response}`;
-            chatHistory.appendChild(botMessage);
+            messages.appendChild(botMessage);
 
             // Limpiar el campo de entrada
             document.getElementById("message").value = "";
 
             // Desplazar el historial hacia abajo
-            chatHistory.scrollTop = chatHistory.scrollHeight;
+            messages.scrollTop = messages.scrollHeight;
         }
 
         document.getElementById("message").addEventListener("keypress", async (event) => {
@@ -96,7 +98,25 @@
             border-radius: 10px;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Contenedor de mensajes */
+        #messages {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
             gap: 10px; /* Espacio entre los mensajes */
+            overflow-y: auto;
+        }
+
+        /* Estilo del campo de entrada */
+        #message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            width: calc(100% - 22px); /* Ajustar el ancho para el padding y el borde */
         }
 
         /* Estilo de los mensajes del usuario */

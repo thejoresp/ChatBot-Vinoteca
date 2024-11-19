@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import ollama
@@ -19,7 +20,7 @@ app.add_middleware(
 messages = [
     {
         'role': 'system',
-        'content': 'Eres un asistente útil especializado en vinos y vinotecas, representas a la "Vinoteca Enotek". Siempre saludas al iniciar un chat y ofreces tus servicios, limitate a responder con la informacion que se te brinda.'
+        'content': 'Eres un asistente virtual de "Vinoteca Enotek". Proporciona información sobre nuestros productos y ubicaciones basándote en los datos suministrados. Siempre saluda al usuario al iniciar una conversación y ofrece tus servicios.'
     },
 ]
 
@@ -39,7 +40,7 @@ class Message(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"message": "Bienvenido a la API de Ollama para Vinotecas"}
+    return {"message": "Bienvenido a la API de Vinoteca Enotek"}
 
 @app.post("/chat")
 async def chat(message: Message):
@@ -56,17 +57,21 @@ async def chat(message: Message):
     informacion_adicional = ''
 
     if respuesta_ubicaciones:
-        informacion_adicional += f"Información sobre ubicaciones:\n{respuesta_ubicaciones}\n\n"
+        informacion_adicional += f"Nuestras ubicaciones relevantes:\n{respuesta_ubicaciones}\n\n"
 
     if respuesta_precios:
-        informacion_adicional += f"Información sobre precios:\n{respuesta_precios}\n\n"
+        informacion_adicional += f"Información sobre precios y productos:\n{respuesta_precios}\n\n"
 
     # Añadir la información adicional al contexto del asistente
     if informacion_adicional:
         messages.append({
             'role': 'system',
-            'content': f'Aquí está la información relevante de nuestros datos:\n{informacion_adicional}'
+            'content': f'Usa la siguiente información para ayudar al usuario:\n{informacion_adicional}'
         })
+
+    # Limitar el tamaño del historial de mensajes
+    if len(messages) > 100:
+        messages = messages[-100:]
 
     # Realizar la consulta a Ollama
     try:
@@ -86,25 +91,27 @@ async def chat(message: Message):
     # Agregar la respuesta del modelo al historial
     messages.append({'role': 'assistant', 'content': respuesta})
 
-    # Limitar el tamaño del historial de mensajes
-    if len(messages) > 100:
-        messages = messages[-100:]
-
     # Devolver la respuesta al cliente
     return {"response": respuesta}
 
 def buscar_informacion_ubicaciones(query):
     resultados = df_ubicaciones[df_ubicaciones.apply(
-        lambda row: query.lower() in row.astype(str).str.lower().values, axis=1)]
+        lambda row: query.lower() in ' '.join(row.astype(str).str.lower().values), axis=1)]
     if not resultados.empty:
-        return resultados.to_dict(orient='records')
+        respuesta = ""
+        for index, row in resultados.iterrows():
+            respuesta += f"- **Sucursal:** {row['Sucursal']} en {row['Ciudad']}, ubicada en {row['Dirección']}. Horario: {row['Horarios']}\n"
+        return respuesta
     else:
         return None
 
 def buscar_informacion_precios(query):
     resultados = df_precios[df_precios.apply(
-        lambda row: query.lower() in row.astype(str).str.lower().values, axis=1)]
+        lambda row: query.lower() in ' '.join(row.astype(str).str.lower().values), axis=1)]
     if not resultados.empty:
-        return resultados.to_dict(orient='records')
+        respuesta = ""
+        for index, row in resultados.iterrows():
+            respuesta += f"- **{row['Producto']}** ({row['Categoría']}): ${row['Precio']}\n"
+        return respuesta
     else:
         return None

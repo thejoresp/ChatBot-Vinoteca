@@ -19,14 +19,18 @@ app.add_middleware(
 messages = [
     {
         'role': 'system',
-        'content': 'Eres un asistente útil especializado en vinos y vinotecas, representas a la "Vinoteca Enotek". Siempre saludas al iniciar un chat y ofreces tus servicios, limitate a responder con la informacion que se te brinda.'
+        'content': 'Eres un asistente especializado en vinos y vinotecas. Debes responder únicamente basándote en la información que te proporcionamos. No agregues información adicional que no esté en nuestros datos.'
     },
 ]
 
 # Cargar datos desde los archivos CSV
 try:
-    df_ubicaciones = pd.read_csv('/home/jl/Development/Ciencia Datos/Procesamiento de habla/ChatBot-Vinoteca/date/Ubicaciones.csv')
-    df_precios = pd.read_csv('/home/jl/Development/Ciencia Datos/Procesamiento de habla/ChatBot-Vinoteca/date/Lista de precios.csv')
+    df_ubicaciones = pd.read_csv('/home/jl/Development/IFTS11/Procesamiento de habla/ChatBot-Vinoteca/date/Ubicaciones.csv')
+    df_precios = pd.read_csv('/home/jl/Development/IFTS11/Procesamiento de habla/ChatBot-Vinoteca/date/Lista de precios.csv')
+    print("Datos de ubicaciones cargados correctamente:")
+    print(df_ubicaciones.head())
+    print("Datos de precios cargados correctamente:")
+    print(df_precios.head())
 except FileNotFoundError as e:
     raise HTTPException(status_code=500, detail=f"Archivo CSV no encontrado: {e.filename}")
 except pd.errors.EmptyDataError:
@@ -71,7 +75,7 @@ async def chat(message: Message):
     # Realizar la consulta a Ollama
     try:
         stream = ollama.chat(
-            model='llama3.2:3b',
+            model='llama3.2:latest',
             messages=messages,
             stream=True,
         )

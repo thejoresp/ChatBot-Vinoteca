@@ -11,17 +11,22 @@ from langchain.schema import Document
 
 app = FastAPI()
 
-# Definir la variable global messages
-messages = []
-
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todos los orígenes
+    allow_origins=["*"],  # Permite todas las orígenes
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos los métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permite todos los encabezados
 )
+
+# Historial de mensajes para la conversación
+messages = [
+    {
+        'role': 'system',
+        'content': 'Eres un asistente especializado en vinos y vinotecas. Debes responder únicamente basándote en la información que te proporcionamos. No agregues información adicional que no esté en nuestros datos.'
+    },
+]
 
 # Cargar datos desde los archivos CSV
 try:
@@ -47,37 +52,46 @@ precios_docs = [Document(page_content=str(row)) for row in df_precios.to_dict(or
 vectorstore_ubicaciones = Chroma.from_documents(ubicaciones_docs, embeddings)
 vectorstore_precios = Chroma.from_documents(precios_docs, embeddings)
 
-# Paso 3: Configuración del modelo de Ollama
+# Configuración del modelo de Ollama
 llm = OllamaLLM(model="llama3.2:latest")
+
+class Message(BaseModel):
+    content: str
 
 @app.get("/")
 def read_root():
     return {"message": "Bienvenido a la API de Ollama para Vinotecas"}
 
-class Message(BaseModel):
-    content: str
-
 @app.post("/chat")
 async def chat(message: Message):
-    global messages
+    global messages  # Declarar 'messages' como global
 
     # Agregar la pregunta al historial de mensajes
     messages.append({'role': 'user', 'content': message.content})
 
-    # Realizar la consulta en los vectorstores usando LangChain
+    # Buscar información relevante en los CSV usando LangChain
     query = message.content
     respuesta_ubicaciones = buscar_informacion_con_langchain(query, vectorstore_ubicaciones)
     respuesta_precios = buscar_informacion_con_langchain(query, vectorstore_precios)
 
     # Combinar las respuestas
     informacion_adicional = ''
-    if respuesta_ubicaciones:
-        informacion_adicional += f"Información sobre ubicaciones:\n{respuesta_ubicaciones}\n\n"
-    if respuesta_precios:
-        informacion_adicional += f"Información sobre precios:\n{respuesta_precios}\n\n"
 
+    if respuesta_ubicaciones and 'result' in respuesta_ubicaciones:
+        informacion_adicional += f"Información sobre ubicaciones:\n{respuesta_ubicaciones['result']}\n\n"
+
+    if respuesta_precios and 'result' in respuesta_precios:
+        informacion_adicional += f"Información sobre precios:\n{respuesta_precios['result']}\n\n"
+
+    print(f'Más información adicional: {informacion_adicional}')
+    print(f'Aquí están los mensajes: {messages}\n')
+
+    # Añadir la información adicional al contexto del asistente
     if informacion_adicional:
-        messages.append({'role': 'system', 'content': f'Aquí está la información relevante de nuestros datos:\n{informacion_adicional}'})
+        messages.append({
+            'role': 'system',
+            'content': f'Aquí está la información relevante de nuestros datos:\n{informacion_adicional}'
+        })
 
     # Realizar la consulta a Ollama
     try:
@@ -91,20 +105,31 @@ async def chat(message: Message):
 
     respuesta = ''
     for chunk in stream:
-        respuesta += chunk['message']['content']
+        if 'message' in chunk and 'content' in chunk['message']:
+            content = chunk['message']['content']
+            respuesta += content  # Acumula el contenido del chunk
+
+    # Verificar si se recibió una respuesta
+    if not respuesta:
+        respuesta = "No se recibió una respuesta válida."
 
     # Agregar la respuesta del modelo al historial
     messages.append({'role': 'assistant', 'content': respuesta})
+    print(f'Aquí está el mensaje: {respuesta}')
 
     # Limitar el tamaño del historial de mensajes
     if len(messages) > 100:
         messages = messages[-100:]
 
-    return {"response": respuesta}
+    # Devolver la respuesta al cliente
+    return {"response": respuesta.strip()}
 
 def buscar_informacion_con_langchain(query, vectorstore):
-    # Realizar la búsqueda en el vectorstore usando LangChain
-    retriever = vectorstore.as_retriever()
-    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
-    respuesta = qa_chain.invoke(query)
-    return respuesta
+    try:
+        # Realizar la búsqueda en el vectorstore usando LangChain
+        retriever = vectorstore.as_retriever()
+        qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+        respuesta = qa_chain.invoke(query)  # Usar invoke en lugar de __call__ o run
+        return {"result": respuesta} if isinstance(respuesta, str) else respuesta
+    except Exception as e:
+        return {"result": "Error al buscar información"}

@@ -1,34 +1,44 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 import ollama
-from langchain_ollama import OllamaLLM
-from langchain.chains import RetrievalQA
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.schema import Document
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from langchain.chains.combine_documents.base import StuffDocumentsChain
+from langchain.chains.conversation.memory import ConversationBufferMemory
+from langchain.vectorstores import Chroma  # O FAISS
+from langchain.docstore.document import Document
+from langchain.embeddings import OpenAIEmbeddings  # O Hugging Face
+from typing import List
 
 app = FastAPI()
-
-# Definir la variable global messages
-messages = []
 
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todos los orígenes
+    allow_origins=["*"],  # Permite todas las orígenes
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos los métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permite todos los encabezados
 )
 
+# Historial de mensajes para la conversación
+messages = [
+    {
+        'role': 'system',
+        'content': 'Eres un asistente especializado en vinos y vinotecas. Debes responder únicamente basándote en la información que te proporcionamos. No agregues información adicional que no esté en nuestros datos.'
+    },
+]
+
 # Cargar datos desde los archivos CSV
 try:
     df_ubicaciones = pd.read_csv('/home/jl/Development/IFTS11/Procesamiento de habla/ChatBot-Vinoteca/date/Ubicaciones.csv')
     df_precios = pd.read_csv('/home/jl/Development/IFTS11/Procesamiento de habla/ChatBot-Vinoteca/date/Lista de precios.csv')
-    print("Datos de ubicaciones cargados correctamente")
-    print("Datos de precios cargados correctamente")
+    print("Datos de ubicaciones cargados correctamente:")
+    print(df_ubicaciones.head())
+    print("Datos de precios cargados correctamente:")
+    print(df_precios.head())
 except FileNotFoundError as e:
     raise HTTPException(status_code=500, detail=f"Archivo CSV no encontrado: {e.filename}")
 except pd.errors.EmptyDataError:
@@ -36,48 +46,39 @@ except pd.errors.EmptyDataError:
 except Exception as e:
     raise HTTPException(status_code=500, detail=f"Error al leer el archivo CSV: {e}")
 
-# Cargar el modelo de embeddings
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-
-# Convertir DataFrame a lista de documentos
-ubicaciones_docs = [Document(page_content=str(row)) for row in df_ubicaciones.to_dict(orient="records")]
-precios_docs = [Document(page_content=str(row)) for row in df_precios.to_dict(orient="records")]
-
-# Crear Vector Store para Ubicaciones y Precios usando Chroma
-vectorstore_ubicaciones = Chroma.from_documents(ubicaciones_docs, embeddings)
-vectorstore_precios = Chroma.from_documents(precios_docs, embeddings)
-
-# Paso 3: Configuración del modelo de Ollama
-llm = OllamaLLM(model="llama3.2:latest")
+class Message(BaseModel):
+    content: str
 
 @app.get("/")
 def read_root():
     return {"message": "Bienvenido a la API de Ollama para Vinotecas"}
 
-class Message(BaseModel):
-    content: str
-
 @app.post("/chat")
 async def chat(message: Message):
-    global messages
+    global messages  # Declarar 'messages' como global
 
     # Agregar la pregunta al historial de mensajes
     messages.append({'role': 'user', 'content': message.content})
 
-    # Realizar la consulta en los vectorstores usando LangChain
-    query = message.content
-    respuesta_ubicaciones = buscar_informacion_con_langchain(query, vectorstore_ubicaciones)
-    respuesta_precios = buscar_informacion_con_langchain(query, vectorstore_precios)
+    # Buscar información relevante en los CSV usando LangChain
+    respuesta_ubicaciones = buscar_informacion_langchain(df_ubicaciones, message.content)
+    respuesta_precios = buscar_informacion_langchain(df_precios, message.content)
 
     # Combinar las respuestas
     informacion_adicional = ''
+
     if respuesta_ubicaciones:
         informacion_adicional += f"Información sobre ubicaciones:\n{respuesta_ubicaciones}\n\n"
+
     if respuesta_precios:
         informacion_adicional += f"Información sobre precios:\n{respuesta_precios}\n\n"
 
+    # Añadir la información adicional al contexto del asistente
     if informacion_adicional:
-        messages.append({'role': 'system', 'content': f'Aquí está la información relevante de nuestros datos:\n{informacion_adicional}'})
+        messages.append({
+            'role': 'system',
+            'content': f'Aquí está la información relevante de nuestros datos:\n{informacion_adicional}'
+        })
 
     # Realizar la consulta a Ollama
     try:
@@ -89,6 +90,7 @@ async def chat(message: Message):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al consultar el modelo generativo: {e}")
 
+    # Recoger la respuesta del modelo
     respuesta = ''
     for chunk in stream:
         respuesta += chunk['message']['content']
@@ -100,11 +102,18 @@ async def chat(message: Message):
     if len(messages) > 100:
         messages = messages[-100:]
 
+    # Devolver la respuesta al cliente
     return {"response": respuesta}
 
-def buscar_informacion_con_langchain(query, vectorstore):
-    # Realizar la búsqueda en el vectorstore usando LangChain
+def buscar_informacion_langchain(df, query):
+    # Crear un vectorstore con los datos del DataFrame
+    embeddings = OpenAIEmbeddings()
+    vectorstore = Chroma.from_documents([Document(page_content=row.to_json()) for _, row in df.iterrows()], embeddings)
+
+    # Crear una cadena de recuperación de QA
     retriever = vectorstore.as_retriever()
-    qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
-    respuesta = qa_chain.invoke(query)
-    return respuesta
+    qa_chain = RetrievalQA(retriever=retriever)
+
+    # Realizar la consulta
+    result = qa_chain.run(query)
+    return result

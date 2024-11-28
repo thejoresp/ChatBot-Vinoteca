@@ -19,8 +19,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# macOS-specific files
-.DS_Store
 
 # JetBrains IDE settings
 .idea/
+
+.ipynb_checkpoints/
+.jupyter/

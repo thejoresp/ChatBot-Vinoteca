@@ -75,7 +75,7 @@ async def chat(message: Message):
     # Realizar la consulta a Ollama
     try:
         stream = ollama.chat(
-            model='llama3.2:latest',
+            model='llama3.1',
             messages=messages,
             stream=True,
         )

@@ -1,0 +1,345 @@
+/* Enotek Vinos — paleta oscura sobre borgoña, coherente con el rubro. */
+
+:root {
+    --bg: #17110f;
+    --surface: #211917;
+    --surface-alt: #2b211e;
+    --border: #3a2b28;
+    --wine: #8c1c3a;
+    --wine-soft: #b0294c;
+    --text: #f2e9e4;
+    --text-dim: #b6a49e;
+    --ok: #4ea172;
+    --warn: #d9a441;
+    --error: #d3576b;
+    --radius: 14px;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: radial-gradient(circle at 20% -10%, #2c1a1f 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.app {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: clamp(12px, 3vw, 28px);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* --- Header --- */
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+.brand__mark {
+    font-size: 2rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5));
+}
+
+.brand__name {
+    margin: 0;
+    font-size: clamp(1.25rem, 4vw, 1.6rem);
+    letter-spacing: .01em;
+}
+
+.brand__tagline {
+    margin: 2px 0 0;
+    font-size: .8rem;
+    color: var(--text-dim);
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .78rem;
+    color: var(--text-dim);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 12px;
+}
+
+.status__dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+}
+
+.status__dot--ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.status__dot--warn { background: var(--warn); }
+.status__dot--error { background: var(--error); }
+
+/* --- Banner de error --- */
+
+.banner {
+    background: rgba(211, 87, 107, .12);
+    border: 1px solid rgba(211, 87, 107, .45);
+    color: #f4c3cb;
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: .86rem;
+    line-height: 1.5;
+}
+
+.banner code {
+    background: rgba(0, 0, 0, .35);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: .95em;
+}
+
+/* --- Chat --- */
+
+.chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+}
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-height: 320px;
+    scroll-behavior: smooth;
+}
+
+.empty {
+    margin: auto;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: .9rem;
+    line-height: 1.6;
+    max-width: 40ch;
+}
+
+.msg {
+    max-width: 82%;
+    padding: 11px 14px;
+    border-radius: var(--radius);
+    line-height: 1.55;
+    font-size: .93rem;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    animation: appear .18s ease-out;
+}
+
+@keyframes appear {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
+.msg--user {
+    align-self: flex-end;
+    background: var(--wine);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.msg--bot {
+    align-self: flex-start;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+}
+
+.msg--error {
+    align-self: stretch;
+    max-width: 100%;
+    background: rgba(211, 87, 107, .12);
+    border: 1px solid rgba(211, 87, 107, .45);
+    color: #f4c3cb;
+    font-size: .86rem;
+}
+
+.msg p { margin: 0 0 .6em; }
+.msg p:last-child { margin-bottom: 0; }
+.msg ul { margin: .4em 0; padding-left: 1.2em; }
+.msg li { margin: .25em 0; }
+.msg code {
+    background: rgba(0, 0, 0, .3);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: .9em;
+}
+
+/* Fuentes citadas */
+
+.sources {
+    margin-top: 10px;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    font-size: .78rem;
+}
+
+.sources summary {
+    cursor: pointer;
+    color: var(--text-dim);
+    list-style: none;
+}
+
+.sources summary::-webkit-details-marker { display: none; }
+.sources summary::before { content: "▸ "; }
+.sources[open] summary::before { content: "▾ "; }
+.sources summary:hover { color: var(--text); }
+
+.sources ul {
+    margin: 8px 0 0;
+    padding-left: 1.1em;
+    color: var(--text-dim);
+}
+
+.sources li { margin: .3em 0; }
+
+.sources .score {
+    color: var(--wine-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Indicador de escritura */
+
+.typing { display: inline-flex; gap: 4px; align-items: center; height: 1.2em; }
+
+.typing span {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    animation: blink 1.3s infinite;
+}
+
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes blink {
+    0%, 60%, 100% { opacity: .25; }
+    30% { opacity: 1; }
+}
+
+/* --- Sugerencias --- */
+
+.suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.chip:hover:not(:disabled) {
+    background: var(--surface-alt);
+    color: var(--text);
+    border-color: var(--wine-soft);
+}
+
+.chip:disabled { opacity: .45; cursor: not-allowed; }
+
+/* --- Composer --- */
+
+.composer {
+    display: flex;
+    gap: 9px;
+}
+
+.composer input {
+    flex: 1;
+    padding: 13px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: .95rem;
+    font-family: inherit;
+}
+
+.composer input::placeholder { color: var(--text-dim); }
+
+.composer input:focus-visible,
+.chip:focus-visible,
+.composer button:focus-visible,
+.sources summary:focus-visible {
+    outline: 2px solid var(--wine-soft);
+    outline-offset: 2px;
+}
+
+.composer input:disabled { opacity: .6; }
+
+.composer button {
+    background: var(--wine);
+    border: none;
+    color: #fff;
+    width: 50px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background .15s;
+    flex-shrink: 0;
+}
+
+.composer button:hover:not(:disabled) { background: var(--wine-soft); }
+.composer button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* --- Footer --- */
+
+.footer {
+    text-align: center;
+    font-size: .74rem;
+    color: var(--text-dim);
+}
+
+.footer p { margin: 0; }
+.footer a { color: var(--wine-soft); }
+
+@media (max-width: 480px) {
+    .msg { max-width: 90%; }
+    .messages { padding: 13px; min-height: 260px; }
+}

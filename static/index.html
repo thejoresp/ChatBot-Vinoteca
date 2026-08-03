@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enotek Vinos · Asistente</title>
+    <meta name="description" content="Asistente virtual de Enotek Vinos: precios, sucursales y horarios.">
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍷</text></svg>">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="brand">
+                <span class="brand__mark" aria-hidden="true">🍷</span>
+                <div>
+                    <h1 class="brand__name">Enotek Vinos</h1>
+                    <p class="brand__tagline">Asistente virtual</p>
+                </div>
+            </div>
+            <div class="status" id="status" role="status">
+                <span class="status__dot" id="status-dot"></span>
+                <span id="status-text">Conectando…</span>
+            </div>
+        </header>
+
+        <div class="banner" id="banner" role="alert" hidden></div>
+
+        <main class="chat">
+            <div class="messages" id="messages" role="log" aria-live="polite" aria-label="Conversación"></div>
+
+            <div class="suggestions" id="suggestions">
+                <button type="button" class="chip">¿Cuánto sale el Malbec?</button>
+                <button type="button" class="chip">¿Qué vinos tintos tienen?</button>
+                <button type="button" class="chip">¿Dónde queda la sucursal de Córdoba?</button>
+                <button type="button" class="chip">¿A qué hora abren los sábados?</button>
+            </div>
+        </main>
+
+        <form class="composer" id="composer" autocomplete="off">
+            <label class="sr-only" for="message">Escribí tu consulta</label>
+            <input
+                type="text"
+                id="message"
+                name="message"
+                placeholder="Preguntá por precios, sucursales u horarios…"
+                maxlength="2000"
+                required
+            >
+            <button type="submit" id="send" aria-label="Enviar consulta">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path fill="currentColor" d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
+                </svg>
+            </button>
+        </form>
+
+        <footer class="footer">
+            <p>
+                Respuestas generadas con un LLM local y datos propios de la vinoteca.
+                <a href="/docs">Documentación de la API</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

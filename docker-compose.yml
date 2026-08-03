@@ -1,0 +1,49 @@
+services:
+  # Servidor de modelos. La primera vez descarga ~2.3 GB (llama3.2:3b +
+  # nomic-embed-text) al volumen `ollama-models`; después arranca en segundos.
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-models:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  # Job de un solo uso: baja los modelos y termina.
+  model-puller:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "ollama pull llama3.2:3b && ollama pull nomic-embed-text"
+    restart: "no"
+
+  app:
+    build: .
+    depends_on:
+      model-puller:
+        condition: service_completed_successfully
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      CHAT_MODEL: llama3.2:3b
+      EMBEDDING_MODEL: nomic-embed-text
+      CORS_ORIGINS: '["http://localhost:8000","http://127.0.0.1:8000"]'
+    ports:
+      - "8000:8000"
+    volumes:
+      # Los CSV se montan desde el host para poder editarlos sin reconstruir.
+      - ./data:/srv/data:ro
+      - app-cache:/srv/.cache
+
+volumes:
+  ollama-models:
+  app-cache:

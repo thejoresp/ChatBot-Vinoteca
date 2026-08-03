@@ -1,0 +1,45 @@
+[project]
+name = "chatbot-vinoteca"
+version = "1.0.0"
+description = "Asistente conversacional para una vinoteca, con RAG sobre datos propios y LLM local vía Ollama"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Jorge Espinola" }]
+
+dependencies = [
+    "fastapi>=0.115.5",
+    "uvicorn[standard]>=0.32.1",
+    "pydantic>=2.10.2",
+    "pydantic-settings>=2.6.1",
+    "pandas>=2.2.3",
+    "numpy>=2.1.3",
+    "ollama>=0.4.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.28.0",
+    "ruff>=0.8.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]  # el proyecto está en español: acentos en docstrings y strings
